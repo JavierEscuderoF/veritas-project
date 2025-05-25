@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Servicio PHP-FPM
+  php:
+    build:
+      context: ./php # Directorio donde está el Dockerfile de PHP
+    container_name: veritas_php
+    volumes:
+      - ./src:/var/www/html # Monta tu código fuente
+    environment:
+      PMA_HOST: db # Para phpMyAdmin si lo añades después
+      PMA_PORT: 3306
+    networks:
+      - app-network
+    depends_on:
+      - db
+
+  # Servicio Nginx (Servidor Web)
+  nginx:
+    image: nginx:1.25-alpine # O la versión que prefieras
+    container_name: veritas_nginx
+    ports:
+      - "8080:80" # Accede a la app en http://<IP_SERVIDOR>:8080
+    volumes:
+      - ./src:/var/www/html # Mismo código fuente que PHP
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf # Configuración de Nginx
+    networks:
+      - app-network
+    depends_on:
+      - php
+
+  # Servicio MySQL (Base de Datos)
+  db:
+    image: mysql:8.0
+    container_name: veritas_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: veritas_db
+      MYSQL_USER: veritas_user
+      MYSQL_PASSWORD: escudero # ¡Cambia esto!
+      MYSQL_ROOT_PASSWORD: escudero # ¡Cambia esto!
+    volumes:
+      - db_data:/var/lib/mysql # Persistencia de datos de MySQL
+    networks:
+      - app-network
+    ports: # Opcional: si necesitas acceder a MySQL desde tu Desktop directamente
+       - "33060:3306"
+
+  # NUEVO SERVICIO: Adminer
+  adminer:
+    image: adminer:latest # Imagen oficial de Adminer
+    container_name: veritas_adminer # Cambié el nombre
+    restart: unless-stopped
+    ports:
+      - "8081:8080" # Accederás a Adminer en http://<IP_SERVIDOR>:8081
+    networks:
+      - app-network
+    depends_on: # Opcional, pero bueno para asegurar que db esté disponible
+      - db
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  db_data: # Volumen para persistir los datos de MySQL

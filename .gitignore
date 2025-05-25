@@ -1,0 +1,20 @@
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de log
+*.log
+logs/
+
+# Dependencias de Composer (si usas PHP Composer más adelante)
+/vendor/
+
+# Archivos de configuración local de IDEs (opcional, a veces .vscode/settings.json se comparte)
+# .vscode/
+# .idea/
+
+# Variables de entorno locales (si usas un archivo .env no versionado)
+.env
+
+# Datos de Docker que no deben versionarse (el volumen de MySQL ya está separado)
+# Si tuvieras otros datos volátiles o específicos del entorno local.
