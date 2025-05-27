@@ -24,9 +24,4 @@ RUN apk add --no-cache \
 # Directorio de trabajo
 WORKDIR /var/www/html
 
-# Opcional: Cambiar configuración de PHP (ej: upload_max_filesize)
-# RUN echo "upload_max_filesize=32M" > /usr/local/etc/php/conf.d/uploads.ini
-# RUN echo "post_max_size=32M" >> /usr/local/etc/php/conf.d/uploads.ini
-
-# Permisos (si es necesario, aunque montar desde el host puede manejar esto)
-# RUN chown -R www-data:www-data /var/www/html
+COPY conf.d/uploads.ini /usr/local/etc/php/conf.d/uploads.ini

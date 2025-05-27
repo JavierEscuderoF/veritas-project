@@ -1,7 +1,7 @@
 <?php
 // Test de PHP
 echo "<h1>¡Hola desde mi Proyecto de Investigación en Docker!</h1>";
-// phpinfo();
+ phpinfo();
 
 // Test de conexión a MySQL (descomentar después de que la BD esté lista)
 /*
