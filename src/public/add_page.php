@@ -3,21 +3,25 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once '../core/db_connection.php';
-require_once '../core/functions.php';
+require_once '../core/bootstrap.php'; // Esto carga config, functions, y db_connection ($pdo)
 
 $active_project_id = get_active_project_id_or_redirect();
 $active_project_name = $_SESSION['active_project_name'] ?? 'Proyecto Activo'; // Asume que se cargó en sources.php
 
-$error_message = '';
-$success_message = '';
+$preselected_source_id = filter_input(INPUT_GET, 'source_id', FILTER_VALIDATE_INT);
+if ($preselected_source_id) {
+    // Verificar que esta fuente pertenece al proyecto activo
+    $stmt_check = $pdo->prepare("SELECT source_id FROM Sources WHERE source_id = ? AND project_id = ?");
+    $stmt_check->execute([$preselected_source_id, $active_project_id]);
+    if ($stmt_check->fetch()) {
+        $selected_source_id = $preselected_source_id; // Para el <select>
+        $source_choice = 'existing'; // Marcar el radio button
+    } else {
+        $preselected_source_id = null; // No válido, no preseleccionar
+    }
+}
 
-// Definir la ruta base para las subidas de imágenes
-// Asegúrate de que esta ruta es relativa al directorio raíz de tu aplicación
-// y que el servidor web tiene permisos de escritura.
-// La carpeta 'uploads' debe estar dentro de 'public' y ser escribible por www-data.
-define('UPLOADS_DIR_BASE', __DIR__ . '/uploads/'); // __DIR__ es el directorio de este script (public/)
-define('UPLOADS_URL_BASE', 'uploads/'); // URL base relativa al webroot (public/)
+
 
 // Obtener fuentes existentes para el desplegable
 $existing_sources = [];
@@ -26,7 +30,7 @@ try {
     $stmt->execute([$active_project_id]);
     $existing_sources = $stmt->fetchAll();
 } catch (PDOException $e) {
-    $error_message = "Error al cargar las fuentes existentes: " . $e->getMessage();
+    set_flash_message('error', "Error al cargar las fuentes existentes: " . $e->getMessage());
 }
 
 // Variables para repoblar el formulario en caso de error
@@ -140,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
         $final_image_filename = $page_public_id . '.' . strtolower($file_extension);
 
         // Crear directorio para el proyecto si no existe
-        $project_upload_dir = UPLOADS_DIR_BASE . 'project_' . $active_project_id . '/';
+        $project_upload_dir = UPLOADS_FS_BASE . 'project_' . $active_project_id . '/';
         if (!is_dir($project_upload_dir)) {
             if (!mkdir($project_upload_dir, 0775, true)) { // Permisos 0775, recursivo
                  throw new Exception("No se pudo crear el directorio de subida para el proyecto: " . $project_upload_dir);
@@ -169,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack(); // Revertir transacción en caso de error
         }
-        $error_message = "Error al añadir la página: " . $e->getMessage();
+        set_flash_message('error', "Error al añadir la página: " . $e->getMessage());
     }
 }
 
@@ -211,14 +215,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
         <div class="project-nav">
             <a href="sources.php">Volver a Fuentes (Proyecto: <?php echo sanitize_output($active_project_name); ?>)</a>
         </div>
-        <h1>Añadir Nueva Página</h1>
 
-        <?php if ($success_message): ?>
-            <div class="message success"><?php echo sanitize_output($success_message); ?></div>
-        <?php endif; ?>
-        <?php if ($error_message): ?>
-            <div class="message error"><?php echo sanitize_output($error_message); ?></div>
-        <?php endif; ?>
+        <?php display_flash_messages(); ?>
+
+        <h1>Añadir Nueva Página</h1>
 
         <form action="add_page.php" method="POST" enctype="multipart/form-data">
             <fieldset>

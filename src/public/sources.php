@@ -3,14 +3,9 @@
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-require_once '../core/db_connection.php';
-require_once '../core/functions.php';
+require_once '../core/bootstrap.php';
 
 $active_project_id = get_active_project_id_or_redirect(); // Asegura que hay un proyecto activo
-
-$error_message = $_SESSION['error_message'] ?? '';
-$success_message = $_SESSION['success_message'] ?? '';
-unset($_SESSION['error_message'], $_SESSION['success_message']); // Limpiar mensajes flash
 
 // Cargar nombre del proyecto activo si no está en sesión
 if (empty($_SESSION['active_project_name'])) {
@@ -26,7 +21,8 @@ if (empty($_SESSION['active_project_name'])) {
             redirect('projects.php');
         }
     } catch (PDOException $e) {
-        $error_message = "Error al cargar el nombre del proyecto: " . $e->getMessage();
+        set_flash_message('error', "Error al cargar el nombre del proyecto: " . $e->getMessage());
+        redirect('projects.php'); 
     }
 }
 $active_project_name = $_SESSION['active_project_name'] ?? 'Desconocido';
@@ -53,14 +49,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_source'])) {
         if ($source_data && $source_data['page_count'] == 0) {
             $stmt_delete = $pdo->prepare("DELETE FROM Sources WHERE source_id = ? AND project_id = ?");
             $stmt_delete->execute([$source_to_delete_id, $active_project_id]);
-            $success_message = "Fuente eliminada con éxito.";
+            set_flash_message('success', "Fuente eliminada con éxito.");
+            redirect('sources.php');
         } else {
-            $error_message = "No se puede eliminar la fuente. Asegúrate de que no tenga páginas o que pertenezca al proyecto activo.";
+            set_flash_message('error', "No se puede eliminar la fuente. Asegúrate de que no tenga páginas o que pertenezca al proyecto activo.");
+            redirect('sources.php');
         }
         $pdo->commit();
     } catch (PDOException $e) {
         $pdo->rollBack();
-        $error_message = "Error al eliminar la fuente: " . $e->getMessage();
+        set_flash_message('error', "Error al eliminar la fuente: " . $e->getMessage());
     }
 }
 
@@ -78,7 +76,7 @@ try {
     $stmt_sources->execute([$active_project_id]);
     $sources = $stmt_sources->fetchAll();
 } catch (PDOException $e) {
-    $error_message .= " Error al cargar las fuentes: " . $e->getMessage(); // Usar .= para no sobrescribir mensajes anteriores
+    set_flash_message('error', " Error al cargar las fuentes: " . $e->getMessage()); // Anteriormente: Usar .= para no sobrescribir mensajes anteriores 
 }
 
 ?>
@@ -112,14 +110,10 @@ try {
             <a href="projects.php">Volver a Proyectos</a>
             | <span>Proyecto Activo: <strong><?php echo sanitize_output($active_project_name); ?></strong></span>
         </div>
-        <h1>Fuentes del Proyecto: "<?php echo sanitize_output($active_project_name); ?>"</h1>
 
-        <?php if ($success_message): ?>
-            <div class="message success"><?php echo sanitize_output($success_message); ?></div>
-        <?php endif; ?>
-        <?php if ($error_message): ?>
-            <div class="message error"><?php echo sanitize_output($error_message); ?></div>
-        <?php endif; ?>
+        <?php display_flash_messages(); ?>
+
+        <h1>Fuentes del Proyecto: "<?php echo sanitize_output($active_project_name); ?>"</h1>
 
         <div class="header-actions">
             <a href="add_page.php">Añadir Nueva Página/Fuente</a>

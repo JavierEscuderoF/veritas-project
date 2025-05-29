@@ -1,58 +1,72 @@
 <?php
 // src/public/projects.php
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+require_once '../core/bootstrap.php'; // Carga config, functions, y db_connection ($pdo)
 
-require_once '../core/db_connection.php';
-require_once '../core/functions.php';
-
-// Lógica para crear un nuevo proyecto
-$error_message = '';
-$success_message = '';
-
+// Lógica para crear un nuevo proyecto (sin cambios respecto a la versión anterior)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_project'])) {
     $project_name = trim($_POST['project_name'] ?? '');
     $project_description = trim($_POST['project_description'] ?? '');
 
     if (empty($project_name)) {
-        $error_message = "El nombre del proyecto es obligatorio.";
+        set_flash_message('error', "El nombre del proyecto es obligatorio.");
     } else {
         try {
             $stmt = $pdo->prepare("INSERT INTO Projects (project_name, project_description) VALUES (?, ?)");
             $stmt->execute([$project_name, $project_description]);
-            $success_message = "Proyecto '" . sanitize_output($project_name) . "' creado con éxito.";
+            set_flash_message('success', "Proyecto '" . sanitize_output($project_name) . "' creado con éxito.");
+            // No redirigir aquí para que se vea el mensaje y la lista actualizada
         } catch (PDOException $e) {
-            if ($e->errorInfo[1] == 1062) { // Error de entrada duplicada (por project_name UNIQUE)
-                $error_message = "Ya existe un proyecto con este nombre.";
+            if ($e->errorInfo[1] == 1062) {
+                set_flash_message('error', "Ya existe un proyecto con este nombre.");
             } else {
-                $error_message = "Error al crear el proyecto: " . $e->getMessage();
+                set_flash_message('error', "Error al crear el proyecto: " . $e->getMessage());
+                error_log("Error en projects.php (creación): " . $e->getMessage());
             }
         }
     }
+    // Redirigir para limpiar el POST y mostrar el mensaje flash
+    redirect('projects.php');
 }
 
-// Lógica para seleccionar un proyecto activo
+// Lógica para seleccionar un proyecto activo (sin cambios)
 if (isset($_GET['select_project_id'])) {
     $selected_project_id = (int)$_GET['select_project_id'];
-    // Verificar que el proyecto existe
-    $stmt = $pdo->prepare("SELECT project_id FROM Projects WHERE project_id = ?");
-    $stmt->execute([$selected_project_id]);
-    if ($stmt->fetch()) {
-        $_SESSION['active_project_id'] = $selected_project_id;
-        $_SESSION['active_project_name'] = ''; // Se cargará en la siguiente página
-        redirect('sources.php'); // O a un dashboard del proyecto
-    } else {
-        $error_message = "El proyecto seleccionado no es válido.";
+    try {
+        $stmt = $pdo->prepare("SELECT project_id, project_name FROM Projects WHERE project_id = ?");
+        $stmt->execute([$selected_project_id]);
+        $project = $stmt->fetch();
+        if ($project) {
+            $_SESSION['active_project_id'] = $project['project_id'];
+            $_SESSION['active_project_name'] = $project['project_name']; // Guardar nombre directamente
+            $_SESSION['active_project_id_for_name'] = $project['project_id']; // Para la función get_active_project_name
+            redirect('sources.php');
+        } else {
+            set_flash_message('error', "El proyecto seleccionado no es válido.");
+            redirect('projects.php');
+        }
+    } catch (PDOException $e) {
+        set_flash_message('error', "Error al seleccionar el proyecto: " . $e->getMessage());
+        error_log("Error en projects.php (selección): " . $e->getMessage());
+        redirect('projects.php');
     }
 }
 
-// Obtener lista de proyectos existentes
-$projects = [];
+// Obtener lista de proyectos existentes con contador de fuentes
+$projects_with_counts = [];
 try {
-    $stmt = $pdo->query("SELECT project_id, project_name, project_description FROM Projects ORDER BY project_name ASC");
-    $projects = $stmt->fetchAll();
+    $sql = "SELECT p.project_id, p.project_name, p.project_description, COUNT(s.source_id) as source_count
+            FROM Projects p
+            LEFT JOIN Sources s ON p.project_id = s.project_id
+            GROUP BY p.project_id, p.project_name, p.project_description
+            ORDER BY p.project_name ASC";
+    $stmt = $pdo->query($sql);
+    $projects_with_counts = $stmt->fetchAll();
 } catch (PDOException $e) {
-    $error_message = "Error al cargar los proyectos: " . $e->getMessage();
+    // Guardar el mensaje en sesión para mostrarlo después de una posible redirección inicial
+    // o si esta página se carga directamente con un error.
+    // Como no hay redirección forzada aquí, podemos mostrarlo directamente.
+    $page_error_message = "Error al cargar los proyectos: " . $e->getMessage();
+    error_log("Error en projects.php (carga lista): " . $e->getMessage());
 }
 
 ?>
@@ -71,7 +85,8 @@ try {
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px;}
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
-        .action-links a { margin-right: 10px; text-decoration: none; }
+        .action-links a, .action-links button { margin-right: 5px; text-decoration: none; padding: 5px 8px; border: 1px solid #ccc; background-color: #f0f0f0; color: #333; cursor: pointer; font-size:0.9em; border-radius: 3px; }
+        .action-links form { display: inline-block; margin:0; padding:0; }
         form div { margin-bottom: 10px; }
         label { display: block; margin-bottom: 5px; }
         input[type="text"], textarea { width: calc(100% - 12px); padding: 6px; }
@@ -81,32 +96,40 @@ try {
 </head>
 <body>
     <div class="container">
-        <h1>Mis proyectos de investigación</h1>
+        <h1>Mis Proyectos de Investigación</h1>
 
-        <?php if ($success_message): ?>
-            <div class="message success"><?php echo sanitize_output($success_message); ?></div>
-        <?php endif; ?>
-        <?php if ($error_message): ?>
-            <div class="message error"><?php echo sanitize_output($error_message); ?></div>
+        <?php display_flash_messages(); ?>
+        <?php if (!empty($page_error_message)): ?>
+            <div class="message error"><?php echo sanitize_output($page_error_message); ?></div>
         <?php endif; ?>
 
-        <h2>Proyectos existentes</h2>
-        <?php if (count($projects) > 0): ?>
+
+        <h2>Proyectos Existentes</h2>
+        <?php if (count($projects_with_counts) > 0): ?>
             <table>
                 <thead>
                     <tr>
                         <th>Nombre del Proyecto</th>
                         <th>Descripción</th>
+                        <th>Nº Fuentes</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($projects as $project): ?>
+                    <?php foreach ($projects_with_counts as $project): ?>
                         <tr>
                             <td><?php echo sanitize_output($project['project_name']); ?></td>
                             <td><?php echo nl2br(sanitize_output($project['project_description'] ?? '')); ?></td>
+                            <td><?php echo $project['source_count']; ?></td>
                             <td class="action-links">
                                 <a href="projects.php?select_project_id=<?php echo $project['project_id']; ?>">Seleccionar</a>
+                                <a href="edit_project.php?id=<?php echo $project['project_id']; ?>">Editar</a>
+                                <?php if ($project['source_count'] == 0): ?>
+                                    <form action="delete_project.php" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este proyecto? Esta acción no se puede deshacer.');">
+                                        <input type="hidden" name="project_id" value="<?php echo $project['project_id']; ?>">
+                                        <button type="submit" name="delete_project">Eliminar</button>
+                                    </form>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -118,7 +141,7 @@ try {
 
         <hr>
 
-        <h2>Crear nuevo proyecto</h2>
+        <h2>Crear Nuevo Proyecto</h2>
         <form action="projects.php" method="POST">
             <div>
                 <label for="project_name">Nombre del Proyecto:</label>

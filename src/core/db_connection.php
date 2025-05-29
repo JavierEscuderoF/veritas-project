@@ -1,28 +1,21 @@
 <?php
 // src/core/db_connection.php
 
-// Configuración de la base de datos
-$host = 'db'; // Nombre del servicio MySQL en docker-compose
-$db   = 'veritas_db';
-$user = 'veritas_user';
-$pass = 'escudero'; // ¡LA MISMA CONTRASEÑA QUE EN docker-compose.yml!
-$charset = 'utf8mb4';
+// config.php ya debería estar incluido por bootstrap.php antes que este archivo,
+// por lo que las constantes DB_* están disponibles.
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
 $options = [
-    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Lanza excepciones en errores
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Devuelve arrays asociativos
-    PDO::ATTR_EMULATE_PREPARES   => false,                  // Usa preparaciones nativas
+    PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
 try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
 } catch (\PDOException $e) {
-    // En un entorno de producción, loguearías este error y mostrarías un mensaje genérico.
-    // Para desarrollo, podemos mostrar el error.
-    error_log("Error de conexión a la BD: " . $e->getMessage());
-    throw new \PDOException($e->getMessage(), (int)$e->getCode());
-    // O simplemente: die("Error de conexión a la BD. Por favor, revisa la configuración y logs.");
+    error_log("CRITICAL DB Connection Error: " . $e->getMessage() . " (DSN: $dsn, User: " . DB_USER . ")");
+    // No mostrar detalles sensibles al usuario en producción
+    die("Error crítico de conexión a la Base de Datos. El administrador ha sido notificado. Por favor, inténtalo más tarde.");
 }
-
-// No cierres la etiqueta PHP aquí si este archivo solo contiene PHP.
+?>
