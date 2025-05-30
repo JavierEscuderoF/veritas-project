@@ -7,6 +7,7 @@ require_once '../core/bootstrap.php'; // Esto carga config, functions, y db_conn
 
 $active_project_id = get_active_project_id_or_redirect();
 $active_project_name = $_SESSION['active_project_name'] ?? 'Proyecto Activo'; // Asume que se cargó en sources.php
+$source_id_from_get = '';
 
 $preselected_source_id = filter_input(INPUT_GET, 'source_id', FILTER_VALIDATE_INT);
 if ($preselected_source_id) {
@@ -15,6 +16,7 @@ if ($preselected_source_id) {
     $stmt_check->execute([$preselected_source_id, $active_project_id]);
     if ($stmt_check->fetch()) {
         $selected_source_id = $preselected_source_id; // Para el <select>
+        $source_id_from_get = $preselected_source_id;
         $source_choice = 'existing'; // Marcar el radio button
     } else {
         $preselected_source_id = null; // No válido, no preseleccionar
@@ -163,9 +165,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
         $stmt_update_page->execute([$page_public_id, $final_image_filename, $page_id]);
 
         $pdo->commit(); // Confirmar transacción
-        $_SESSION['success_message'] = "Página '" . sanitize_output($page_public_id) . "' añadida con éxito.";
+        $_SESSION['success_message'] = "Página «" . sanitize_output($page_public_id) . "» añadida con éxito.";
         if ($new_source_created) {
-            $_SESSION['success_message'] .= " Nueva fuente '" . sanitize_output($source_public_id) . "' creada.";
+            $_SESSION['success_message'] .= " Nueva fuente «" . sanitize_output($source_public_id) . "» creada.";
         }
         redirect('view_page.php?id=' . $page_id);
 
@@ -222,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
 
         <form action="add_page.php" method="POST" enctype="multipart/form-data">
             <fieldset>
-                <legend>Información de la Fuente</legend>
+                <legend>Información de la fuente</legend>
                 <div>
                     <input type="radio" id="source_choice_existing" name="source_choice" value="existing" <?php echo ($source_choice === 'existing' ? 'checked' : ''); ?> onclick="toggleNewSourceFields()">
                     <label for="source_choice_existing" style="display:inline; font-weight:normal;">Usar fuente existente</label>
@@ -237,53 +239,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
                     <select id="existing_source_id" name="existing_source_id">
                         <option value="">-- Elija una fuente --</option>
                         <?php foreach ($existing_sources as $source): ?>
-                            <option value="<?php echo $source['source_id']; ?>" <?php echo ($selected_source_id == $source['source_id'] ? 'selected' : ''); ?>>
-                                <?php echo sanitize_output($source['source_public_id'] . ' - ' . $source['title']);
-                                if ($source['source_id'] == 0) {
-                                    echo "";
-                                }
-                                ?>
+                            <option value="<?php echo $source['source_id']; ?>" <?php echo ($selected_source_id == $source['source_id'] ? 'selected' : ''); ?>
+                                <?php echo ($source_id_from_get == $source['source_id'] ? 'selected' : ''); ?>>
+                                <?php echo sanitize_output($source['title'] . ' (' . $source['source_public_id'] . ')'); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
 
                 <div id="new_source_fields" style="display:none;">
-                    <label for="new_source_title">Título de la Nueva Fuente:</label>
+                    <label for="new_source_title">Título de la nueva fuente:</label>
                     <input type="text" id="new_source_title" name="new_source_title" value="<?php echo sanitize_output($new_source_title); ?>">
                     
                     <label for="new_source_author">Autor:</label>
                     <input type="text" id="new_source_author" name="new_source_author" value="<?php echo sanitize_output($new_source_author); ?>">
 
-                    <label for="new_source_type">Tipo de Fuente:</label>
+                    <label for="new_source_type">Tipo de fuente:</label>
                     <input type="text" id="new_source_type" name="new_source_type" value="<?php echo sanitize_output($new_source_type); ?>" placeholder="Ej: Registro Parroquial, Protocolo Notarial">
                     
-                    <label for="new_source_repo_name">Nombre del Repositorio:</label>
+                    <label for="new_source_repo_name">Nombre del repositorio:</label>
                     <input type="text" id="new_source_repo_name" name="new_source_repo_name" value="<?php echo sanitize_output($new_source_repo_name); ?>">
 
-                    <label for="new_source_repo_ref">Referencia en Repositorio:</label>
+                    <label for="new_source_repo_ref">Referencia en repositorio:</label>
                     <input type="text" id="new_source_repo_ref" name="new_source_repo_ref" value="<?php echo sanitize_output($new_source_repo_ref); ?>">
                     
-                    <label for="new_source_date_text">Fecha de la Fuente (texto):</label>
+                    <label for="new_source_date_text">Fecha de la fuente (texto):</label>
                     <input type="text" id="new_source_date_text" name="new_source_date_text" value="<?php echo sanitize_output($new_source_date_text); ?>" placeholder="Ej: ca. 1880, Siglo XVII">
 
-                    <label for="new_source_notes">Notas de la Fuente:</label>
+                    <label for="new_source_notes">Notas de la fuente:</label>
                     <textarea id="new_source_notes" name="new_source_notes"><?php echo sanitize_output($new_source_notes); ?></textarea>
                 </div>
             </fieldset>
 
             <fieldset>
-                <legend>Información de la Página</legend>
+                <legend>Información de la página</legend>
                 <div>
-                    <label for="page_number_in_source">Número/Identificador de Página en Fuente:</label>
+                    <label for="page_number_in_source">Identificador de página en la fuente:</label>
                     <input type="text" id="page_number_in_source" name="page_number_in_source" value="<?php echo sanitize_output($page_number_in_source); ?>" placeholder="Ej: f. 12r, p. 5">
                 </div>
                 <div>
-                    <label for="page_image">Archivo de Imagen de la Página:</label>
+                    <label for="page_image">Archivo de imagen de la página:</label>
                     <input type="file" id="page_image" name="page_image" accept="image/jpeg,image/png,image/gif,image/webp" required>
                 </div>
                 <div>
-                    <label for="page_description">Descripción de la Página (opcional):</label>
+                    <label for="page_description">Descripción de la página (opcional):</label>
                     <textarea id="page_description" name="page_description"><?php echo sanitize_output($page_description); ?></textarea>
                 </div>
             </fieldset>

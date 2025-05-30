@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_source'])) {
     $source_notes = trim($_POST['source_notes'] ?? null);
 
     if (empty($title)) {
-        $error_message = "El título de la fuente es obligatorio.";
+        set_flash_message('error', "El título de la fuente es obligatorio.");
     } else {
         try {
             $sql = "UPDATE Sources SET 
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_source'])) {
                 $source_id_to_edit, $active_project_id
             ]);
 
-            set_flash_message('success', "Fuente '" . sanitize_output($title) . "' actualizada con éxito.");
+            set_flash_message('success', "Fuente «" . sanitize_output($title) . "» actualizada con éxito.");
             redirect('sources.php');
 
         } catch (PDOException $e) {
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_source'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Fuente - Veritas</title>
+    <title>Editar fuente - Veritas</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .container { max-width: 700px; margin: auto; }
@@ -106,17 +106,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_source'])) {
 
     <div class="container">
         <div class="project-nav">
-            <a href="sources.php">Volver a Fuentes (Proyecto: <?php echo sanitize_output($active_project_name); ?>)</a>
+            <a href="sources.php">Volver a fuentes del proyecto «<?php echo sanitize_output($active_project_name); ?>»</a>
         </div>
-
+        
+        <h1>Editar fuente «<?php echo $source_data ? sanitize_output($source_data['title'] . '» (' . $source_data['source_public_id']) . ')' : 'Fuente no encontrada'; ?></h1>
+        
         <?php display_flash_messages(); ?>
-
-        <h1>Editar Fuente: <?php echo $source_data ? sanitize_output($source_data['source_public_id'] . ' - ' . $source_data['title']) : 'Fuente no encontrada'; ?></h1>
 
         <?php if ($source_data): ?>
             <form action="edit_source.php?id=<?php echo $source_data['source_id']; ?>" method="POST">
                 <div>
-                    <label for="title">Título de la Fuente:</label>
+                    <label for="title">Título de la fuente:</label>
                     <input type="text" id="title" name="title" value="<?php echo sanitize_output($source_data['title'] ?? ''); ?>" required>
                 </div>
                 <div>
@@ -124,32 +124,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_source'])) {
                     <input type="text" id="author" name="author" value="<?php echo sanitize_output($source_data['author'] ?? ''); ?>">
                 </div>
                 <div>
-                    <label for="source_type">Tipo de Fuente:</label>
+                    <label for="source_type">Tipo de fuente:</label>
                     <input type="text" id="source_type" name="source_type" value="<?php echo sanitize_output($source_data['source_type'] ?? ''); ?>" placeholder="Ej: Registro Parroquial">
                 </div>
                 <div>
-                    <label for="repository_name">Nombre del Repositorio:</label>
+                    <label for="repository_name">Nombre del repositorio:</label>
                     <input type="text" id="repository_name" name="repository_name" value="<?php echo sanitize_output($source_data['repository_name'] ?? ''); ?>">
                 </div>
                 <div>
-                    <label for="repository_ref_code">Referencia en Repositorio:</label>
+                    <label for="repository_ref_code">Referencia en repositorio:</label>
                     <input type="text" id="repository_ref_code" name="repository_ref_code" value="<?php echo sanitize_output($source_data['repository_ref_code'] ?? ''); ?>">
                 </div>
                 <div>
-                    <label for="source_date_text">Fecha de la Fuente (texto):</label>
+                    <label for="source_date_text">Fecha de la fuente (texto):</label>
                     <input type="text" id="source_date_text" name="source_date_text" value="<?php echo sanitize_output($source_data['source_date_text'] ?? ''); ?>" placeholder="Ej: ca. 1880, Siglo XVII">
                 </div>
                 <div>
-                    <label for="source_notes">Notas de la Fuente:</label>
+                    <label for="source_notes">Notas de la fuente:</label>
                     <textarea id="source_notes" name="source_notes" rows="4"><?php echo sanitize_output($source_data['source_notes'] ?? ''); ?></textarea>
                 </div>
                 <div>
-                    <input type="submit" name="update_source" value="Actualizar Fuente">
+                    <input type="submit" name="update_source" value="Actualizar">
                     <a href="sources.php" class="cancel-link">Cancelar</a>
                 </div>
             </form>
-        <?php elseif(!$error_message): // Si no hay $source_data y tampoco hubo error cargándola (ya se habría mostrado) ?>
-            <p>No se pudo cargar la información de la fuente.</p>
         <?php endif; ?>
     </div>
 </body>

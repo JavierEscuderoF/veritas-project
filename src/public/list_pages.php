@@ -7,7 +7,7 @@ $active_project_name = get_active_project_name($pdo, $active_project_id);
 
 $source_id_filter = filter_input(INPUT_GET, 'source_id', FILTER_VALIDATE_INT);
 
-$page_title = "Páginas del Proyecto: " . sanitize_output($active_project_name);
+$page_title = "Páginas del proyecto «" . sanitize_output($active_project_name) . "»";
 $current_source_title = null;
 $pages = [];
 
@@ -20,7 +20,7 @@ try {
 
         if ($source_info) {
             $current_source_title = $source_info['title'];
-            $page_title = "Páginas de la Fuente: " . sanitize_output($source_info['source_public_id'] . " - " . $current_source_title);
+            $page_title = "Páginas de la fuente «" . $current_source_title . "» (" . sanitize_output($source_info['source_public_id'] . ")" );
 
             $sql_pages = "SELECT sp.page_id, sp.page_public_id, sp.page_number_in_source, sp.uploaded_at, s.source_public_id as parent_source_public_id
                           FROM Source_Pages sp
@@ -77,18 +77,15 @@ try {
 <body>
     <div class="container">
         <div class="project-nav">
-            <a href="projects.php">Cambiar Proyecto</a> | 
-            <a href="sources.php">Fuentes de "<?php echo sanitize_output($active_project_name); ?>"</a>
-            <?php if ($source_id_filter && $current_source_title): ?>
-                | <span>Fuente Actual: <?php echo sanitize_output($current_source_title); ?></span>
-            <?php endif; ?>
+            <a href="projects.php">Cambiar de proyecto</a> | 
+            <a href="sources.php">Fuentes del proyecto «<?php echo sanitize_output($active_project_name); ?>»</a>
         </div>
         <h1><?php echo $page_title; ?></h1>
 
         <?php display_flash_messages(); ?>
 
         <div class="header-actions">
-            <a href="add_page.php<?php echo $source_id_filter ? '?source_id='.$source_id_filter : ''; ?>">Añadir Nueva Página <?php echo $source_id_filter ? 'a esta Fuente' : ''; ?></a>
+            <a href="add_page.php<?php echo $source_id_filter ? '?source_id='.$source_id_filter : ''; ?>">Añadir página nueva <?php echo $source_id_filter ? 'a esta fuente' : ''; ?></a>
         </div>
 
         <?php if (count($pages) > 0): ?>
@@ -97,11 +94,11 @@ try {
                     <tr>
                         <th>ID Página</th>
                         <?php if (!$source_id_filter): // Mostrar columna Fuente solo en la vista de todas las páginas ?>
-                            <th>Fuente (ID - Título)</th>
+                            <th>Fuente</th>
                         <?php endif; ?>
-                        <th>Nº en Fuente</th>
+                        <th>Nº en fuente</th>
                         <th>Subida el</th>
-                        <th>Menciones (Nº)</th> <th>Menciones (Enlazadas %)</th> <th>Acciones</th>
+                        <th>Nº de menciones</th> <th>% de menciones enlazadas</th> <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,8 +121,8 @@ try {
                             <td><?php echo sanitize_output($page['page_number_in_source'] ?? 'N/A'); ?></td>
                             <td><?php echo date("d/m/Y H:i", strtotime($page['uploaded_at'])); ?></td>
                             <td>0</td> <td>0%</td> <td class="action-links">
-                                <a href="view_page.php?id=<?php echo $page['page_id']; ?>">Ver/Marcar</a>
-                                <a href="edit_page.php?id=<?php echo $page['page_id']; ?>">Editar Detalles</a>
+                                <a href="view_page.php?id=<?php echo $page['page_id']; ?>">Entidades</a>
+                                <a href="edit_page.php?id=<?php echo $page['page_id']; ?>">Editar</a>
                                 <form action="delete_page.php" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta página y todas sus menciones asociadas? Esta acción no se puede deshacer.');">
                                     <input type="hidden" name="page_id" value="<?php echo $page['page_id']; ?>">
                                     <input type="hidden" name="source_id_filter" value="<?php echo $source_id_filter ?? ''; ?>"> <button type="submit" name="delete_page">Eliminar</button>

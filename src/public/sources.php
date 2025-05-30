@@ -140,6 +140,7 @@ try {
                             <td><?php echo sanitize_output($source['source_type'] ?? '-'); ?></td>
                             <td><?php echo $source['page_count']; ?></td>
                             <td class="action-links">
+                                <a href="add_page.php?source_id=<?php echo $source['source_id']; ?>">Añadir página</a>
                                 <a href="list_pages.php?source_id=<?php echo $source['source_id']; ?>">Ver páginas</a>
                                 <a href="edit_source.php?id=<?php echo $source['source_id']; ?>">Editar</a>
                                 <?php if ($source['page_count'] == 0): ?>
