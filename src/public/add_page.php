@@ -183,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Añadir Nueva Página - Veritas</title>
+    <title>Añadir nueva página - Veritas</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .container { max-width: 700px; margin: auto; }
@@ -213,32 +213,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_page'])) {
 <body>
     <div class="container">
         <div class="project-nav">
-            <a href="sources.php">Volver a Fuentes (Proyecto: <?php echo sanitize_output($active_project_name); ?>)</a>
+            <a href="sources.php">Volver a fuentes del proyecto «<?php echo sanitize_output($active_project_name); ?>»</a>
         </div>
-
+        
+        <h1>Añadir nueva página</h1>
+        
         <?php display_flash_messages(); ?>
-
-        <h1>Añadir Nueva Página</h1>
 
         <form action="add_page.php" method="POST" enctype="multipart/form-data">
             <fieldset>
                 <legend>Información de la Fuente</legend>
                 <div>
                     <input type="radio" id="source_choice_existing" name="source_choice" value="existing" <?php echo ($source_choice === 'existing' ? 'checked' : ''); ?> onclick="toggleNewSourceFields()">
-                    <label for="source_choice_existing" style="display:inline; font-weight:normal;">Usar Fuente Existente</label>
+                    <label for="source_choice_existing" style="display:inline; font-weight:normal;">Usar fuente existente</label>
                 </div>
                 <div>
                     <input type="radio" id="source_choice_new" name="source_choice" value="new" <?php echo ($source_choice === 'new' ? 'checked' : ''); ?> onclick="toggleNewSourceFields()">
-                    <label for="source_choice_new" style="display:inline; font-weight:normal;">Crear Nueva Fuente</label>
+                    <label for="source_choice_new" style="display:inline; font-weight:normal;">Crear nueva fuente</label>
                 </div>
 
                 <div id="existing_source_fields">
-                    <label for="existing_source_id">Seleccionar Fuente:</label>
+                    <label for="existing_source_id">Seleccionar fuente:</label>
                     <select id="existing_source_id" name="existing_source_id">
                         <option value="">-- Elija una fuente --</option>
                         <?php foreach ($existing_sources as $source): ?>
                             <option value="<?php echo $source['source_id']; ?>" <?php echo ($selected_source_id == $source['source_id'] ? 'selected' : ''); ?>>
-                                <?php echo sanitize_output($source['source_public_id'] . ' - ' . $source['title']); ?>
+                                <?php echo sanitize_output($source['source_public_id'] . ' - ' . $source['title']);
+                                if ($source['source_id'] == 0) {
+                                    echo "";
+                                }
+                                ?>
                             </option>
                         <?php endforeach; ?>
                     </select>

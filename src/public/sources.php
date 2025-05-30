@@ -50,7 +50,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_source'])) {
             $stmt_delete = $pdo->prepare("DELETE FROM Sources WHERE source_id = ? AND project_id = ?");
             $stmt_delete->execute([$source_to_delete_id, $active_project_id]);
             set_flash_message('success', "Fuente eliminada con éxito.");
-            redirect('sources.php');
         } else {
             set_flash_message('error', "No se puede eliminar la fuente. Asegúrate de que no tenga páginas o que pertenezca al proyecto activo.");
             redirect('sources.php');
@@ -85,7 +84,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fuentes del Proyecto - Veritas</title>
+    <title>Todas las fuentes - Veritas</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .container { max-width: 900px; margin: auto; }
@@ -102,35 +101,33 @@ try {
         .header-actions a { text-decoration: none; padding: 10px 15px; background-color: #007bff; color: white; border-radius: 4px; }
         .header-actions a:hover { background-color: #0056b3; }
         .project-nav a { margin-right: 15px; }
-    </style>
+        </style>
 </head>
 <body>
     <div class="container">
         <div class="project-nav">
-            <a href="projects.php">Volver a Proyectos</a>
-            | <span>Proyecto Activo: <strong><?php echo sanitize_output($active_project_name); ?></strong></span>
+            <a href="projects.php">Volver a proyectos</a>
         </div>
 
+        <h1>Fuentes del proyecto «<?php echo sanitize_output($active_project_name); ?>»</h1>
+        
         <?php display_flash_messages(); ?>
-
-        <h1>Fuentes del Proyecto: "<?php echo sanitize_output($active_project_name); ?>"</h1>
-
+        
         <div class="header-actions">
-            <a href="add_page.php">Añadir Nueva Página/Fuente</a>
-            <a href="list_pages.php" style="margin-left:15px; background-color: #28a745;">Ver Todas las Páginas del Proyecto</a>
+            <a href="add_page.php">Añadir nueva página</a>
+            <a href="list_pages.php" style="margin-left:15px; background-color: #28a745;">Ver todas las páginas del proyecto</a>
 
         </div>
 
-        <h2>Listado de Fuentes</h2>
         <?php if (count($sources) > 0): ?>
             <table>
                 <thead>
                     <tr>
-                        <th>ID Público</th>
+                        <th>ID</th>
                         <th>Título</th>
                         <th>Autor</th>
                         <th>Tipo</th>
-                        <th>Nº Páginas</th>
+                        <th>Nº de páginas</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -143,7 +140,7 @@ try {
                             <td><?php echo sanitize_output($source['source_type'] ?? '-'); ?></td>
                             <td><?php echo $source['page_count']; ?></td>
                             <td class="action-links">
-                                <a href="list_pages.php?source_id=<?php echo $source['source_id']; ?>">Ver Páginas</a>
+                                <a href="list_pages.php?source_id=<?php echo $source['source_id']; ?>">Ver páginas</a>
                                 <a href="edit_source.php?id=<?php echo $source['source_id']; ?>">Editar</a>
                                 <?php if ($source['page_count'] == 0): ?>
                                     <form action="sources.php" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta fuente? Esta acción no se puede deshacer.');">
@@ -157,7 +154,7 @@ try {
                 </tbody>
             </table>
         <?php else: ?>
-            <p>No hay fuentes creadas para este proyecto todavía. <a href="add_page.php">Añade la primera página (y fuente)</a>.</p>
+            <p>Todavía no hay fuentes creadas para este proyecto.</p>
         <?php endif; ?>
     </div>
 </body>

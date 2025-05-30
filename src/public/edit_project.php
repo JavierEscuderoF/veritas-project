@@ -34,14 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_project'])) {
     if (empty($project_name)) {
         set_flash_message('error', "El nombre del proyecto es obligatorio.");
         // Para repoblar el formulario con los datos intentados si hay error de validación
-        $project_data['project_name'] = $project_name; // Puede estar vacío
         $project_data['project_description'] = $project_description;
     } else {
         try {
             $stmt_update = $pdo->prepare("UPDATE Projects SET project_name = ?, project_description = ? WHERE project_id = ?");
             $stmt_update->execute([$project_name, $project_description, $project_id_to_edit]);
 
-            set_flash_message('success', "Proyecto '" . sanitize_output($project_name) . "' actualizado con éxito.");
+            set_flash_message('success', "Proyecto «" . sanitize_output($project_name) . "» actualizado con éxito.");
             redirect('projects.php');
 
         } catch (PDOException $e) {
@@ -64,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_project'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Proyecto - Veritas</title>
+    <title>Editar proyecto - Veritas</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .container { max-width: 700px; margin: auto; }
@@ -84,16 +83,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_project'])) {
 <body>
     <div class="container">
         <div class="project-nav">
-            <a href="projects.php">Volver a Proyectos</a>
+            <a href="projects.php">Volver a proyectos</a>
         </div>
-        <h1>Editar Proyecto: <?php echo $project_data ? sanitize_output($project_data['project_name']) : 'Proyecto no encontrado'; ?></h1>
+        <h1>Editar proyecto «<?php echo $project_data ? sanitize_output($project_data['project_name']) : 'Proyecto no encontrado'; ?>»</h1>
 
         <?php display_flash_messages(); ?>
 
         <?php if ($project_data): ?>
             <form action="edit_project.php?id=<?php echo $project_data['project_id']; ?>" method="POST">
                 <div>
-                    <label for="project_name">Nombre del Proyecto:</label>
+                    <label for="project_name">Nombre del proyecto:</label>
                     <input type="text" id="project_name" name="project_name" value="<?php echo sanitize_output($project_data['project_name'] ?? ''); ?>" required>
                 </div>
                 <div>
@@ -101,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_project'])) {
                     <textarea id="project_description" name="project_description" rows="4"><?php echo sanitize_output($project_data['project_description'] ?? ''); ?></textarea>
                 </div>
                 <div>
-                    <input type="submit" name="update_project" value="Actualizar Proyecto">
+                    <input type="submit" name="update_project" value="Actualizar">
                     <a href="projects.php" class="cancel-link">Cancelar</a>
                 </div>
             </form>

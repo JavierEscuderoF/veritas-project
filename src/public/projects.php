@@ -2,7 +2,7 @@
 // src/public/projects.php
 require_once '../core/bootstrap.php'; // Carga config, functions, y db_connection ($pdo)
 
-// Lógica para crear un nuevo proyecto (sin cambios respecto a la versión anterior)
+// Lógica para crear un nuevo proyecto
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_project'])) {
     $project_name = trim($_POST['project_name'] ?? '');
     $project_description = trim($_POST['project_description'] ?? '');
@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_project'])) {
         try {
             $stmt = $pdo->prepare("INSERT INTO Projects (project_name, project_description) VALUES (?, ?)");
             $stmt->execute([$project_name, $project_description]);
-            set_flash_message('success', "Proyecto '" . sanitize_output($project_name) . "' creado con éxito.");
+            set_flash_message('success', "Proyecto «" . sanitize_output($project_name) . "» creado con éxito.");
             // No redirigir aquí para que se vea el mensaje y la lista actualizada
         } catch (PDOException $e) {
             if ($e->errorInfo[1] == 1062) {
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_project'])) {
     redirect('projects.php');
 }
 
-// Lógica para seleccionar un proyecto activo (sin cambios)
+// Lógica para seleccionar un proyecto activo
 if (isset($_GET['select_project_id'])) {
     $selected_project_id = (int)$_GET['select_project_id'];
     try {
@@ -42,12 +42,10 @@ if (isset($_GET['select_project_id'])) {
             redirect('sources.php');
         } else {
             set_flash_message('error', "El proyecto seleccionado no es válido.");
-            redirect('projects.php');
         }
     } catch (PDOException $e) {
         set_flash_message('error', "Error al seleccionar el proyecto: " . $e->getMessage());
         error_log("Error en projects.php (selección): " . $e->getMessage());
-        redirect('projects.php');
     }
 }
 
@@ -58,7 +56,7 @@ try {
             FROM Projects p
             LEFT JOIN Sources s ON p.project_id = s.project_id
             GROUP BY p.project_id, p.project_name, p.project_description
-            ORDER BY p.project_name ASC";
+            ORDER BY source_count DESC";
     $stmt = $pdo->query($sql);
     $projects_with_counts = $stmt->fetchAll();
 } catch (PDOException $e) {
@@ -75,7 +73,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Proyectos - Veritas</title>
+    <title>Proyectos - Veritas</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .container { max-width: 800px; margin: auto; }
@@ -96,22 +94,21 @@ try {
 </head>
 <body>
     <div class="container">
-        <h1>Mis Proyectos de Investigación</h1>
-
+        <h1>Gestión de proyectos de investigación</h1>
+        
         <?php display_flash_messages(); ?>
         <?php if (!empty($page_error_message)): ?>
             <div class="message error"><?php echo sanitize_output($page_error_message); ?></div>
         <?php endif; ?>
 
-
-        <h2>Proyectos Existentes</h2>
+        <h2>Proyectos existentes</h2>
         <?php if (count($projects_with_counts) > 0): ?>
             <table>
                 <thead>
                     <tr>
-                        <th>Nombre del Proyecto</th>
+                        <th>Nombre del proyecto</th>
                         <th>Descripción</th>
-                        <th>Nº Fuentes</th>
+                        <th>Nº de fuentes</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
@@ -141,10 +138,10 @@ try {
 
         <hr>
 
-        <h2>Crear Nuevo Proyecto</h2>
+        <h2>Crear un nuevo proyecto</h2>
         <form action="projects.php" method="POST">
             <div>
-                <label for="project_name">Nombre del Proyecto:</label>
+                <label for="project_name">Nombre del proyecto:</label>
                 <input type="text" id="project_name" name="project_name" required>
             </div>
             <div>
