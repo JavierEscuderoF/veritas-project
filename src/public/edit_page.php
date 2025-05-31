@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_page'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Página <?php echo $page_data ? sanitize_output($page_data['page_public_id']) : ''; ?> - Veritas</title>
+    <title>Editar página <?php echo $page_data ? sanitize_output($page_data['page_public_id']) : ''; ?> - Veritas</title>
     <style>
         body { font-family: sans-serif; margin: 20px; }
         .container { max-width: 700px; margin: auto; }
@@ -93,37 +93,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_page'])) {
         input[type="submit"], .cancel-link { padding: 10px 20px; text-decoration:none; border: none; cursor: pointer; border-radius: 4px; margin-right:10px;}
         input[type="submit"] { background-color: #007bff; color: white; }
         .cancel-link { background-color: #6c757d; color:white; display:inline-block;}
-        .project-nav a { margin-right: 15px; }
+        .project-nav a { margin-right: 15px; margin-left: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="project-nav">
-            <a href="projects.php">Cambiar Proyecto</a> | 
-            <a href="sources.php">Fuentes de "<?php echo sanitize_output($active_project_name); ?>"</a>
+            <a href="projects.php">Cambiar proyecto</a> | 
+            <a href="sources.php">Fuentes del proyecto «<?php echo sanitize_output($active_project_name); ?>»</a>
             <?php if ($page_data): ?>
-                | <a href="list_pages.php?source_id=<?php echo $page_data['source_id']; ?>">Páginas de "<?php echo sanitize_output($page_data['source_public_id'] . ' - ' . $page_data['source_title']); ?>"</a>
-                | <a href="view_page.php?id=<?php echo $page_data['page_id']; ?>">Ver Página <?php echo sanitize_output($page_data['page_public_id']); ?></a>
+                | <a href="list_pages.php?source_id=<?php echo $page_data['source_id']; ?>">Páginas de la fuente «<?php echo sanitize_output($page_data['source_title'] . '» (' . $page_data['source_public_id'] . ")"); ?>"</a>
+                | <a href="view_page.php?id=<?php echo $page_data['page_id']; ?>">Ver página <?php echo sanitize_output($page_data['page_public_id']); ?></a>
             <?php endif; ?>
         </div>
 
-        <h1>Editar Detalles de Página: <?php echo $page_data ? sanitize_output($page_data['page_public_id']) : 'Página no encontrada'; ?></h1>
+        <h1>Editar detalles de la página <?php echo $page_data ? sanitize_output($page_data['page_public_id']) : 'Página no encontrada'; ?></h1>
 
         <?php display_flash_messages(); ?>
 
         <?php if ($page_data): ?>
             <form action="edit_page.php?id=<?php echo $page_data['page_id']; ?>" method="POST">
                 <div>
-                    <label for="page_number_in_source">Número/Identificador de Página en Fuente:</label>
+                    <label for="page_number_in_source">Identificador de la página en la fuente:</label>
                     <input type="text" id="page_number_in_source" name="page_number_in_source" value="<?php echo sanitize_output($page_data['page_number_in_source'] ?? ''); ?>" placeholder="Ej: f. 12r, p. 5">
                 </div>
                 <div>
-                    <label for="page_description">Descripción de la Página (opcional):</label>
+                    <label for="page_description">Descripción de la página (opcional):</label>
                     <textarea id="page_description" name="page_description" rows="5"><?php echo sanitize_output($page_data['page_description'] ?? ''); ?></textarea>
                 </div>
                 
                 <div>
-                    <input type="submit" name="update_page" value="Actualizar Detalles">
+                    <input type="submit" name="update_page" value="Actualizar">
                     <a href="view_page.php?id=<?php echo $page_data['page_id']; ?>" class="cancel-link">Cancelar</a>
                 </div>
             </form>

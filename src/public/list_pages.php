@@ -114,14 +114,14 @@ try {
                                         $temp_source = $temp_stmt->fetch();
                                         if ($temp_source) echo $temp_source['source_id']; else echo '#';
                                     ?>">
-                                        <?php echo sanitize_output($page['parent_source_public_id'] . ' - ' . $page['parent_source_title']); ?>
+                                        <?php echo sanitize_output($page['parent_source_title'] . ' (' . $page['parent_source_public_id'] . ")"); ?>
                                     </a>
                                 </td>
                             <?php endif; ?>
                             <td><?php echo sanitize_output($page['page_number_in_source'] ?? 'N/A'); ?></td>
                             <td><?php echo date("d/m/Y H:i", strtotime($page['uploaded_at'])); ?></td>
                             <td>0</td> <td>0%</td> <td class="action-links">
-                                <a href="view_page.php?id=<?php echo $page['page_id']; ?>">Entidades</a>
+                                <a href="view_page.php?id=<?php echo $page['page_id']; ?>">Ver</a>
                                 <a href="edit_page.php?id=<?php echo $page['page_id']; ?>">Editar</a>
                                 <form action="delete_page.php" method="POST" onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta página y todas sus menciones asociadas? Esta acción no se puede deshacer.');">
                                     <input type="hidden" name="page_id" value="<?php echo $page['page_id']; ?>">
