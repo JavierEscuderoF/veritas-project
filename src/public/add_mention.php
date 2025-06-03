@@ -14,26 +14,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input_data = json_decode(file_get_contents('php://input'), true);
 
     $page_id = filter_var($input_data['page_id'] ?? null, FILTER_VALIDATE_INT);
-    $coordinates = $input_data['coordinates'] ?? null; // Se espera un array/objeto: x, y, width, height
+    $coordinates_array = $input_data['coordinates'] ?? null; // Se espera un array de objetos: x, y, width, height
     $mention_string_literal = trim($input_data['mention_string_literal'] ?? '');
     $entity_type_suggestion = trim($input_data['entity_type_suggestion'] ?? null);
 
-    if (!$page_id || !$coordinates || $mention_string_literal === '') {
-        $response['message'] = 'Datos incompletos: page_id, coordinates y texto literal son obligatorios.';
+    if (!$page_id || !is_array($coordinates_array) || empty($coordinates_array) || $mention_string_literal === '') {
+        $response['message'] = 'Datos incompletos: page_id, un array de coordinates y texto literal son obligatorios.';
         echo json_encode($response);
         exit;
     }
 
-    // Validar coordenadas (básico)
-    if (!isset($coordinates['x'], $coordinates['y'], $coordinates['width'], $coordinates['height']) ||
-        !is_numeric($coordinates['x']) || !is_numeric($coordinates['y']) ||
-        !is_numeric($coordinates['width']) || !is_numeric($coordinates['height'])) {
-        $response['message'] = 'Formato de coordenadas no válido.';
-        echo json_encode($response);
-        exit;
+    // Validar cada objeto de coordenadas en el array
+    foreach ($coordinates_array as $coords) {
+        if (!isset($coords['x'], $coords['y'], $coords['width'], $coords['height']) ||
+            !is_numeric($coords['x']) || !is_numeric($coords['y']) ||
+            !is_numeric($coords['width']) || !is_numeric($coords['height']) ||
+            $coords['width'] <= 0 || $coords['height'] <= 0) { // Ancho y alto deben ser positivos
+            $response['message'] = 'Formato de coordenadas no válido en uno de los rectángulos.';
+            echo json_encode($response);
+            exit;
+        }
     }
-    $coordinates_json = json_encode($coordinates);
-
+    $coordinates_json = json_encode($coordinates_array); // Guardar el array como JSON
 
     // Verificar que la página pertenece al proyecto activo
     try {
@@ -75,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'mention_id' => $mention_id,
             'mention_public_id' => $mention_public_id,
             'page_id' => $page_id,
-            'coordinates_on_image' => $coordinates, // Devolver el array, no el JSON string
+            'coordinates_on_image' => $coordinates_array, // Devolver el array, no el JSON string
             'mention_string_literal' => $mention_string_literal,
             'entity_type_suggestion' => $entity_type_suggestion
         ];
